@@ -1,0 +1,27 @@
+<li>
+	<div class="hint bottom-margin-form">
+		<ol>
+			<li>Go to <a href='https://code.google.com/apis/console/' target="_blank">https://code.google.com/apis/console/</a> and create a new application.</li>
+			<li>On the Dashboard sidebar click on API Access then Click 'Create an OAuth 2.0 client ID...'.</li>
+			<li>On the 'Create Client ID' popup:<br/>
+				- Enter a product name (the name of your website will do). <br/>
+				- Enter the URL for a logo if you like. <br/>
+				- Click Next. <br/>
+				- Select 'Web application' as the application type. <br/>
+				- Then switch to advanced settings by clicking on (more options).
+			</li>
+			<li>Provide this URL as the Callback URL for your application:<br/>
+				<?php
+					$provider = FlynsarmySocialLogin_ProviderHelper::get_provider('Google', false);
+					$config = FlynsarmySocialLogin_Configuration::create();
+
+					echo root_url('/flynsarmysociallogin_provider_callback/?hauth.done='.$provider->info['id'].'&success_redirect='.$config->success_page_url('/', true), true);
+				?>
+			</li>
+			<li>Once you have registered, copy and past the created client credentials into this setup page.</li>
+			<li>&nbsp;</li>
+			<li>Note: You'll also need to enter a Callback URL for any custom redirects used on your site.</li>
+		</ol>
+		<!--<a title="Hide this hint" href="#" class="close" onclick="return hide_tip('flynsarmysociallogin_descs_google', this)">Close</a>-->
+	</div>
+</li>

@@ -1,0 +1,16 @@
+<li>
+	<div class="hint bottom-margin-form">
+		<ol>
+			<li>
+				Go to <a href="http://www.tumblr.com/oauth/apps" target="_blank">http://www.tumblr.com/oauth/apps</a> and create a new application.<br/>
+				- Enter your application name (the name of your site will do).<br/>
+				- Application website is <?= root_url('/', true) ?><br/>
+				- Leave the store URLs blank. Description is optional
+				- Set the callback URL to:<br/>
+				  <?= FlynsarmySocialLogin_ProviderHelper::get_provider('Tumblr', false)->get_callback_url() ?>
+			</li>
+			<li>Once you have registered, copy and paste the created Consumer and Secret keys into this setup page.</li>
+		</ol>
+		<!--<a title="Hide this hint" href="#" class="close" onclick="return hide_tip('flynsarmysociallogin_descs_google', this)">Close</a>-->
+	</div>
+</li>

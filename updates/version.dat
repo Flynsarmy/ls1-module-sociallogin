@@ -1,0 +1,21 @@
+#1 Module initialization
+#2 Added email confirmation template for associated login providers
+#3 Minor bug fix
+#4 Minor performance improvements
+#5 Typo fixes, Facebook now retrieves customer name correctly
+#6 Added option to send new customers their LS password in an email
+#7 Add event flynsarmysociallogin:onCustomerCreated
+#8 Added event flynsarmysociallogin:onCustomerAssociated, added provider argument to onCustomerCreated
+#9 UPDATE YOUR SETTINGS AFTER INSTALLING. Cleaned up settings page. Added name confirmation and error page redirects. Better login validation and error handling.
+#10 Better failure message when using invalid Twitter API credentials
+#11 Better handling of non-existing users on email confirmation page
+#12 Support passing login redirect URLs
+#13 Minor bug fix
+#14 Fixed custom redirects on login with Google and Windows Live
+#15 Fixed custom redirects on Facebook, improvements to Google custom redirect
+#16 SSL fixes for Facebook
+#17 Provider description fixes, Multiple theme support - YOU MUST UPDATE YOUR SETTINGS ON THE 'SYSTEM - SETTINGS - SOCIAL LOGIN' SETTINGS TAB AFTER INSTALLING THIS UPDATE
+#18 Bug fix for sites without themes enabled, compatability fix with Easy SEO Redirects module, apply email confirmation first/last names for existing customers, added Disassociate Provider functionality to Customer Preview section of admin
+#19 Custom redirects now work correctly after associating an email
+#20 Set first/last name correctly when creating a new customer on email association
+#21 Prioritise registered customers when associating social accounts to LS accounts

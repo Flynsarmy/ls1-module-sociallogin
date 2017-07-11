@@ -1,0 +1,126 @@
+<?php
+	class FlynsarmySocialLogin_Tumblr_SocialAuthType extends FlynsarmySocialLogin_SocialAuthTypeBase
+	{
+		public $info = array(
+			'id' => 'Tumblr',
+			'name'=>'Tumblr',
+		);
+
+		public function is_enabled()
+		{
+			return $this->get_config()->tumblr_is_enabled ? true : false;
+		}
+
+		public function get_login_url($options = array())
+		{
+			$options = array_merge(array(
+				'provider' => $this->info['id'],
+			), (array)$options);
+
+			return root_url('/flynsarmysociallogin_provider_login?' . http_build_query($options), true);
+		}
+
+		public function send_login_request()
+		{
+			require_once  dirname(__FILE__).'/../vendor/tumblroauth/tumblroauth.php';
+			$Config = $this->get_config();
+
+			$client = new TumblrOAuth($Config->tumblr_app_id, $Config->tumblr_secret);
+			$Config = $this->get_config();
+
+			// Ask Tumblr for a Request Token.  Specify the Callback URL here too (although this should be optional)
+			$request_token = $client->getRequestToken($this->get_callback_url());
+
+			Phpr::$session->set('oauth_token', $request_token['oauth_token']);
+			Phpr::$session->set('oauth_token_secret', $request_token['oauth_token_secret']);
+
+			switch ($client->http_code) {
+				case 200:
+					/* Build authorize URL and redirect user to Tumblr. */
+					$url = $client->getAuthorizeURL(Phpr::$session->get('oauth_token'));
+					header('Location: ' . $url);
+					exit;
+				default:
+					return $this->set_error(array(
+						'debug' => "Failed to retrieve Tumblr request token. HTTP response " . $client->http_code,
+						'customer' => "Could not connect to Tumblr. Refresh the page or try again later."
+					));
+			}
+		}
+
+		public function login()
+		{
+			/* If the oauth_token is old redirect to the connect page. */
+			if (isset($_REQUEST['oauth_token']) && Phpr::$session->get('oauth_token') !== $_REQUEST['oauth_token'])
+				return $this->set_error(array(
+					'debug' => "login(): oauth_token is old.",
+					'customer' => "Your login session has expired. Please try again."
+				));
+
+			require_once  dirname(__FILE__).'/../vendor/tumblroauth/tumblroauth.php';
+			$Config = $this->get_config();
+
+			// Create instance of TumblrOAuth.
+			// It'll need our Consumer Key and Secret as well as our Request Token and Secret
+			$client = new TumblrOAuth($Config->tumblr_app_id, $Config->tumblr_secret, Phpr::$session->get('oauth_token', ''), Phpr::$session->get('oauth_token_secret'));
+
+			/* Request access tokens from twitter */
+			$access_token = $client->getAccessToken($_REQUEST['oauth_verifier']);
+			/* $access_token will look like this:
+			array(4) [
+				oauth_token => '#########-zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz',
+				oauth_token_secret => 'zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz',
+			]
+			*/
+
+			$user_details = $client->get("http://api.tumblr.com/v2/user/info");
+			var_dump($access_token);
+			exit;
+
+
+			/* Save the access tokens. Normally these would be saved in a database for future use. */
+			//Phpr::$session->set('access_token', $access_token);
+
+			/* Remove no longer needed request tokens */
+			Phpr::$session->remove('oauth_token');
+			Phpr::$session->remove('oauth_token_secret');
+
+			/* If HTTP response is 200 continue otherwise send to connect page to retry */
+			if ($connection->http_code != 200)
+				return $this->set_error(array(
+					'debug' => "login(): HTTP response code was ".$connection->http_code." when trying to get access token.",
+					'customer' => "",
+				));
+
+			$screen_name = explode(' ', $access_token['screen_name'], 2);
+			$first_name = reset($screen_name);
+			$last_name = sizeof($screen_name) > 1 ? end($screen_name) : '';
+
+			return array(
+				//Use their twitter user id as the unique identifier so if they
+				//revoke the token and relogin we won't create a duplicate user
+				'token' => $access_token['user_id'],
+				'first_name' => $first_name,
+				'last_name' => $last_name,
+			);
+		}
+
+		/**
+		 * Builds the social login administration user interface
+		 * For drop-down and radio fields you should also add methods returning
+		 * options. For example, of you want to have Sizes drop-down:
+		 * public function get_sizes_options();
+		 * This method should return array with keys corresponding your option identifiers
+		 * and values corresponding its titles.
+		 *
+		 * @param $host_obj ActiveRecord object to add fields to
+		 * @param string $context Form context. In preview mode its value is 'preview'
+		 */
+		public function build_config_ui($host_obj, $context = null)
+		{
+			$host_obj->add_form_custom_area('descs_tumblr')->tab('Tumblr');
+			$host_obj->add_field('tumblr_is_enabled', 'Allow users to sign on with Tumblr?', 'full', db_bool)->tab('Tumblr')->renderAs(frm_checkbox);
+			$host_obj->add_field('tumblr_app_id', 'Consumer Key', 'full', db_text)->tab('Tumblr')->renderAs(frm_text);
+			$host_obj->add_field('tumblr_secret', 'Secret Key', 'full', db_text)->tab('Tumblr')->renderAs(frm_text);
+		}
+	}

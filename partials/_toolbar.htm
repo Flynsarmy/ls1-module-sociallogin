@@ -1,0 +1,4 @@
+<?php if ($customer->flynsarmysociallogin_customer_providers->count()): ?>
+	<div class="separator">&nbsp;</div>
+	<?= backend_ctr_button('Login Providers', 'people', array('href'=>'#', 'onclick'=>"new PopupForm('onCustomEvent', {ajaxFields: {custom_event_handler: 'flynsarmysociallogin:show_customer_login_providers_modal'}}); return false;")) ?>
+<?php endif ?>

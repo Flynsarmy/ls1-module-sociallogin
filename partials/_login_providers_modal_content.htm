@@ -1,0 +1,50 @@
+<h2><?= $customer->full_name ?>'s Login Providers</h2>
+<div class="content">
+	<div class="form500">
+		<?= Phpr_Form::openTag() ?>
+
+			<? if (!isset($fatalError)): ?>
+				<p>With the below form you may disassociate login providers from your customer's account. Once disassociated, the customer will have to go through the association process again when next logging in using that provider.</p>
+
+				<table class="simpleList">
+					<thead>
+						<tr>
+							<th>Provider</th>
+							<th class="iconCell last">Actions</th>
+						</tr>
+					</thead>
+
+					<tbody id="options_list_body<?= $this->formGetEditSessionKey() ?>">
+						<? if ( !$providers->count() ): ?>
+							<tr class="noData">
+								<td colspan="2" class="last">This customer has no login providers associated with his/her account.</td>
+							</tr>
+						<? else: ?>
+							<? foreach ( $providers as $customer_provider ):
+								$provider = $customer_provider->get_provider();
+								$onclick = "return $(this).getForm().sendPhpr('onCustomEvent', {
+									loadIndicator: {injectInElement: true},
+									update: 'login_providers_modal',
+									confirm: 'Are you sure you want to disassociate ".$provider->info['name']." with this customers account?',
+									extraFields: {custom_event_handler: 'flynsarmysociallogin:on_disassociate_provider', customer_provider_id: ".$customer_provider->id."}
+								});";
+							?>
+								<tr class="<?= Backend_Html::zebra('customer_providers') ?>">
+									<td><?= $provider->info['name'] ?></td>
+									<td class="iconCell last"><a onclick="<?= $onclick ?>" title="Disassociate <?= $provider->info['name'] ?>" class="deleteDocument" href="#">Disassociate <?= $provider->info['name'] ?></a></td>
+								</tr>
+							<? endforeach ?>
+						<? endif ?>
+					</tbody>
+				</table>
+
+				<?= backend_button('Close', array('onclick'=>'return cancelPopup()')) ?>
+			<? else: ?>
+				<div class="formFlash"><?= flash() ?></div>
+				<?= backend_button('Cancel', array('onclick'=>'return cancelPopup()')) ?>
+			<? endif ?>
+
+			<div class="clear"></div>
+		</form>
+	</div>
+</div>

@@ -1,0 +1,89 @@
+<?php
+	class FlynsarmySocialLogin_Disqus_SocialAuthType extends FlynsarmySocialLogin_SocialAuthTypeBase
+	{
+		public $info = array(
+			'id' => 'Disqus',
+			'name'=>'Disqus',
+		);
+
+		public function is_enabled()
+		{
+			return $this->get_config()->disqus_is_enabled ? true : false;
+		}
+
+		public function get_login_url($options = array())
+		{
+			$options = array_merge(array(
+				'provider' => $this->info['id'],
+			), (array)$options);
+
+			return root_url('/flynsarmysociallogin_provider_login?' . http_build_query($options), true);
+		}
+
+		public function login() {
+			$this->send_login_request();
+		}
+
+		public function send_login_request()
+		{
+			require_once(dirname(__FILE__).'/../vendor/hybridauth/Hybrid/Auth.php');
+			$_GET = Phpr::$request->get_fields;
+			$Config = $this->get_config();
+
+			$hybridauth = new Hybrid_Auth(array(
+				'base_url' => $this->get_callback_url(),
+				"providers" => array (
+					// openid providers
+					"Disqus" => array (
+						"enabled" => true,
+						"keys"    => array ( "id" => $Config->disqus_app_id, "secret" => $Config->disqus_secret )
+					),
+				),
+				// if you want to enable logging, set 'debug_mode' to true  then provide a writable file by the web server on "debug_file"
+				"debug_mode" => false,
+
+				"debug_file" => dirname(__FILE__).'/log.log',
+			));
+
+			// automatically try to login
+			$adapter = $hybridauth->authenticate( "Disqus" );
+
+			// return TRUE or False <= generally will be used to check if the user is connected to twitter before getting user profile, posting stuffs, etc..
+			$is_user_logged_in = $twitter->isUserConnected();
+
+			// get the user profile
+			$user_profile = $adapter->getUserProfile();
+
+			var_dump($user_profile);
+			exit;
+
+			$response = array();
+
+			//Move into Shop_Customer fields where possible
+			$response['token'] = $user->uid;
+			if ( !empty($user->email) ) $response['email'] = filter_var($user->email, FILTER_SANITIZE_EMAIL);
+			$response['first_name'] = $display_name[0];
+			$response['last_name'] = $display_name[1];
+
+			return $response;
+		}
+
+		/**
+		 * Builds the social login administration user interface
+		 * For drop-down and radio fields you should also add methods returning
+		 * options. For example, of you want to have Sizes drop-down:
+		 * public function get_sizes_options();
+		 * This method should return array with keys corresponding your option identifiers
+		 * and values corresponding its titles.
+		 *
+		 * @param $host_obj ActiveRecord object to add fields to
+		 * @param string $context Form context. In preview mode its value is 'preview'
+		 */
+		public function build_config_ui($host_obj, $context = null)
+		{
+			$host_obj->add_form_custom_area('descs_disqus')->tab('Disqus');
+			$host_obj->add_field('disqus_is_enabled', 'Allow users to sign on with Disqus?', 'full', db_bool)->tab('Disqus')->renderAs(frm_checkbox);
+			$host_obj->add_field('disqus_app_id', 'API Key', 'full', db_text)->tab('Disqus')->renderAs(frm_text);
+			$host_obj->add_field('disqus_secret', 'API Secret', 'full', db_text)->tab('Disqus')->renderAs(frm_text);
+		}
+	}
