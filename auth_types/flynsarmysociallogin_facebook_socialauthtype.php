@@ -1,6 +1,8 @@
 <?php
 	class FlynsarmySocialLogin_Facebook_SocialAuthType extends FlynsarmySocialLogin_SocialAuthTypeBase
 	{
+	    protected $client;
+
 		public $info = array(
 			'id' => 'Facebook',
 			'name'=>'Facebook',
@@ -13,59 +15,95 @@
 
 		public function get_client()
 		{
-			require_once  dirname(__FILE__).'/../vendor/facebook-php-sdk/src/facebook.php';
-			Facebook::$CURL_OPTS[CURLOPT_SSL_VERIFYPEER] = false;
-			Facebook::$CURL_OPTS[CURLOPT_SSL_VERIFYHOST] = 2;
+			require_once  dirname(__FILE__).'/../vendor/autoload.php';
+
 			$Config = $this->get_config();
 
-			$client = new Facebook(array(
-				'appId'  => $Config->facebook_app_id,
-				'secret' => $Config->facebook_secret,
-			));
+			return new Hybridauth\Provider\Facebook([
+                /**
+                 * Required: Callback URL
+                 *
+                 * The callback url is the location where a provider (Google in this case) will redirect the use once they
+                 * authenticate and authorize your application. For this example we choose to come back to this same script.
+                 *
+                 * Note that Hybridauth provides an utility function `Hybridauth\HttpClient\Util::getCurrentUrl()` that can
+                 * generate the current page url for you and you can use it for the callback.
+                 */
+                'callback' => $this->get_callback_url(array()),
 
-			return $client;
+                /**
+                 * Required*: Application credentials
+                 *
+                 * A set of keys used by providers to identify your website (analogous to a login and password).
+                 * To acquire these credentials you'll have to register an application on provider's site. In the case of Google
+                 * for instance, you can refer to https://support.google.com/cloud/answer/6158849
+                 *
+                 * Application credentials are only required by providers using OAuth 1 and OAuth 2.
+                 */
+                'keys' => [
+                    'id'     => $Config->facebook_app_id,
+                    'secret' => $Config->facebook_secret,
+                ],
+
+                /**
+                 * Optional: Custom Scope
+                 *
+                 * Providers using OAuth 2 will requires to know the scope of the authorization a user is going to give to your
+                 * application. Hybridauth's adapters will request a limited scope by default, however you may specify a custom
+                 * value to overwrite default ones.
+                 */
+                'scope' => 'email, user_about_me',
+            ]);
 		}
 
-		public function get_login_url($options = array())
-		{
-			Phpr::$session->set('flynsarmysociallogin_options', $options);
+        public function get_login_url($options = array())
+        {
+            Phpr::$session->set('flynsarmysociallogin_options', $options);
 
-			return $this->get_client()->getLoginUrl(array(
-				'redirect_uri' => $this->get_callback_url($options),
-				'scope' => array(
-					'perms' => 'email',
-				),
-			));
-		}
+            $options = array_merge(array(
+                'provider' => $this->info['id'],
+            ), (array)$options);
+
+            return root_url('/flynsarmysociallogin_provider_login?' . http_build_query($options), true);
+        }
+
+        public function send_login_request()
+        {
+            $this->login();
+        }
 
 		public function login()
 		{
-			$client = $this->get_client();
-			$user = $client->getUser();
+		    $fb = $this->get_client();
 
-			if ( !$user )
-				return $this->set_error(array(
-					'debug' => "login(): getUser() call failed to log us in.",
-					'customer' => "An error occurred while attempting to log you in. Please try again later.",
-				));
+		    try {
+                $fb->authenticate();
+            } catch (Exception $e) {
+                return $this->set_error(array(
+                    'debug' => "login(): " . 'Graph returned an error authenticating: ' . $e->getMessage(),
+                    'customer' => "An error occurred while attempting to log you in. Please try again later.",
+                ));
+            }
 
-			try {
-				// Proceed knowing you have a logged in user who's authenticated.
-				$user_profile = $client->api('/me');
-			} catch (FacebookApiException $e) {
-				return $this->set_error(array(
-					'debug' => "login(): Error grabbing user profile: ".$e->getMessage(),
-					'customer' => "An error while attempting to log you in. Please try again.",
-				));
-			}
+            try {
+                $user = $fb->getUserProfile();
+            } catch (Exception $e) {
+                return $this->set_error(array(
+                    'debug' => "login(): " . 'Graph returned an error retrieving user profile details: ' . $e->getMessage(),
+                    'customer' => "An error occurred while attempting to log you in. Please try again later.",
+                ));
+            }
 
-			$response = array();
-			$response['token'] = $user_profile['id'];
-			if ( !empty($user_profile['email']) ) $response['email'] = $user_profile['email'];
-			if ( !empty($user_profile['first_name']) ) $response['first_name'] = $user_profile['first_name'];
-			if ( !empty($user_profile['last_name']) ) $response['last_name'] = $user_profile['last_name'];
+            $response = array();
+            $response['token'] = $user->identifier;
+            if ( $user->email )
+                $response['email'] = $user->email;
+            if ( $user->firstName )
+                $response['first_name'] = $user->firstName;
+            if ( $user->lastName )
+                $response['last_name'] = $user->lastName;
 
-			return $response;
+            return $response;
 		}
 
 		/**

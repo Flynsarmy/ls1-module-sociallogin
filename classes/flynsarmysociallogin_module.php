@@ -1,7 +1,7 @@
 <?php
 	class FlynsarmySocialLogin_Module extends Core_ModuleBase
 	{
-		protected static $debug = false;
+		protected static $debug = true;
 		public $providers = null;
 
 		/**
@@ -33,7 +33,7 @@
 		public function register_access_points()
 		{
 			return array(
-				'flynsarmysociallogin_provider_callback'=>'provider_callback',
+                'flynsarmysociallogin_provider_callback'=>'provider_callback',
 				'flynsarmysociallogin_provider_login' => 'provider_login',
 				'flynsarmysociallogin_associate_email'=>'associate_email',
 			);
@@ -190,8 +190,8 @@
 			if ( !$provider )
 				return $this->handle_error(array(
 					'debug' => empty($provider_id) ?
-						"provider_callable(): No hauth.done GET variable. Unable to determine provider" :
-						"provider_callable(): No provider of id '$provider_id' found or provider not enabled.",
+						"provider_callback(): No hauth.done GET variable. Unable to determine provider" :
+						"provider_callback(): No provider of id '$provider_id' found or provider not enabled.",
 					'customer' => "We were unable to determine who you were trying to log in with."
 				));
 
@@ -205,7 +205,7 @@
 					return $this->handle_error($provider->get_error());
 			} catch ( Exception $e ) {
 				return $this->handle_error(array(
-					'debug' => "provider_callable(): Provider '$provider_id' error: " . $e->getMessage(),
+					'debug' => "provider_callback(): Provider '$provider_id' error: " . $e->getMessage(),
 					'customer' => $e->getMessage()
 				));
 			}

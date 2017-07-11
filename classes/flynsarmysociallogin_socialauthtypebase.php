@@ -66,17 +66,28 @@
 
 		}
 
+        /**
+         * The options used to generate the callback URL.
+         *
+         * @param array $options
+         * @return array
+         */
+		public function get_callback_options($options = array())
+        {
+            $config = FlynsarmySocialLogin_Configuration::create();
+            return array_merge(array(
+                'hauth.done' => $this->info['id'],
+                'success_redirect' => $config->success_page_url('/', true),
+            ), (array)$options);
+        }
+
 		/**
 		 * The URL on our site that OAuth requests will respond to with login details
 		 * @param $redirect URL to redirect to on successful login
 		 */
 		public function get_callback_url($options = array())
 		{
-			$config = FlynsarmySocialLogin_Configuration::create();
-			$options = array_merge(array(
-				'hauth.done' => $this->info['id'],
-				'success_redirect' => $config->success_page_url('/', true),
-			), (array)$options);
+			$options = $this->get_callback_options($options);
 
 			return root_url('/flynsarmysociallogin_provider_callback/?'.http_build_query($options), true);
 		}

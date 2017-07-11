@@ -19,3 +19,4 @@
 #19 Custom redirects now work correctly after associating an email
 #20 Set first/last name correctly when creating a new customer on email association
 #21 Prioritise registered customers when associating social accounts to LS accounts
+#22 Updated Facebook login to API v2.8
