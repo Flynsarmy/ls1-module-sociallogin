@@ -1,7 +1,7 @@
 <?php
 	class FlynsarmySocialLogin_Module extends Core_ModuleBase
 	{
-		protected static $debug = true;
+		protected static $debug = false;
 		public $providers = null;
 
 		/**
